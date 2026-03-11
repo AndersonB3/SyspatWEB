@@ -1,0 +1,60 @@
+# ============================================================
+# SysWebPat — .gitignore raiz
+# ============================================================
+
+# -------------------------------------------------------
+# SEGREDOS — NUNCA commitar estes arquivos
+# -------------------------------------------------------
+**/.env
+**/.env.*
+!**/.env.example
+
+# Token MCP do Supabase (contém chave de API)
+.vscode/mcp.json
+
+# Scripts de verificação com credenciais embutidas
+backend/migrations/check_db.py
+
+# -------------------------------------------------------
+# Python / Backend
+# -------------------------------------------------------
+backend/__pycache__/
+backend/**/__pycache__/
+backend/**/*.py[cod]
+backend/**/*.pyo
+backend/venv/
+backend/.venv/
+backend/*.egg-info/
+backend/dist/
+backend/build/
+backend/.pytest_cache/
+backend/.coverage
+backend/htmlcov/
+
+# -------------------------------------------------------
+# Node / Frontend
+# -------------------------------------------------------
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/.pnp
+frontend/.pnp.*
+frontend/.yarn/*
+!frontend/.yarn/patches
+!frontend/.yarn/plugins
+!frontend/.yarn/releases
+!frontend/.yarn/versions
+frontend/coverage/
+frontend/*.tsbuildinfo
+
+# -------------------------------------------------------
+# Geral
+# -------------------------------------------------------
+.DS_Store
+Thumbs.db
+*.log
+*.swp
+*.swo
+*.bak
+*.tmp
