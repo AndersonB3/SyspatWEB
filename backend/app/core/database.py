@@ -13,15 +13,22 @@ _supabase_client: AsyncClient | None = None
 async def get_supabase() -> AsyncClient:
     """Retorna a instância singleton do cliente Supabase assíncrono.
 
-    Usa a anon key (RLS desabilitado nas tabelas — controle de acesso feito no FastAPI).
+    Em ambiente serverless (Vercel) cada invocação pode ser uma nova instância —
+    o singleton é recriado se necessário.
     """
     global _supabase_client
     if _supabase_client is None:
-        key = settings.supabase_anon_key
-        logger.info(f"Criando cliente Supabase async (key[-20:]={key[-20:]})")
-        _supabase_client = await acreate_client(
-            settings.supabase_url,
-            key,
-            options=ClientOptions(schema="public"),
-        )
+        try:
+            key = settings.supabase_anon_key
+            url = settings.supabase_url
+            logger.warning(f"[DB] Criando cliente Supabase: url={url[:40]} key_len={len(key)}")
+            _supabase_client = await acreate_client(
+                url,
+                key,
+                options=ClientOptions(schema="public"),
+            )
+            logger.warning("[DB] Cliente Supabase criado com sucesso")
+        except Exception as e:
+            logger.error(f"[DB] Erro ao criar cliente Supabase: {e}", exc_info=True)
+            raise
     return _supabase_client

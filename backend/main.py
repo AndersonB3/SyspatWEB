@@ -15,7 +15,7 @@ from app.api import router as api_router
 
 # Logging: INFO em produção, DEBUG em desenvolvimento
 logging.basicConfig(
-    level=logging.DEBUG if settings.app_env == "development" else logging.WARNING
+    level=logging.WARNING  # WARNING aparece nos logs da Vercel em produção
 )
 logger = logging.getLogger(__name__)
 
@@ -65,11 +65,12 @@ app.add_middleware(SecurityHeadersMiddleware)
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     """Loga detalhes internamente mas retorna mensagem genérica ao cliente."""
-    logger.error(f"Unhandled exception on {request.method} {request.url.path}: {exc}")
-    logger.error(traceback.format_exc())
+    tb = traceback.format_exc()
+    logger.error(f"[500] {request.method} {request.url.path} | {type(exc).__name__}: {exc}")
+    logger.error(f"[TRACEBACK] {tb}")
     return JSONResponse(
         status_code=500,
-        content={"detail": "Erro interno no servidor. Tente novamente mais tarde."},
+        content={"detail": "Erro interno no servidor. Tente novamente mais tarde.", "error": str(exc)},
     )
 
 
