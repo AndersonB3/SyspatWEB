@@ -41,3 +41,5 @@ htmlcov/
 
 # Migrations temporárias (scripts de uso único)
 migrations/check_db.py
+.vercel
+.env*.local
