@@ -70,7 +70,7 @@ async def global_exception_handler(request: Request, exc: Exception):
     logger.error(f"[TRACEBACK] {tb}")
     return JSONResponse(
         status_code=500,
-        content={"detail": "Erro interno no servidor. Tente novamente mais tarde.", "error": f"{type(exc).__name__}: {exc}"},
+        content={"detail": "Erro interno no servidor. Tente novamente mais tarde."},
     )
 
 
