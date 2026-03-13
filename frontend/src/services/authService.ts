@@ -2,6 +2,7 @@
 
 import { api } from './api';
 import { AuthResponse, User, LoginRequest, ChangePasswordRequest } from '@/types/auth';
+import { useAuthStore } from '@/store/authStore';
 
 /**
  * Persiste os tokens como cookies HttpOnly via API Route interna.
@@ -30,7 +31,6 @@ export const authService = {
 
   async changePassword(data: ChangePasswordRequest): Promise<AuthResponse> {
     const response = await api.post<AuthResponse>('/auth/change-password', data);
-    // O backend retorna novos tokens após troca de senha
     if (response.accessToken && response.refreshToken) {
       await persistTokens(response.accessToken, response.refreshToken);
     }
@@ -42,8 +42,13 @@ export const authService = {
   },
 
   async logout() {
-    await fetch('/api/auth/clear-tokens', { method: 'POST' });
+    // 1. Limpar store imediatamente (antes de qualquer redirect)
+    useAuthStore.getState().logout();
+    // 2. Limpar cache do token
     api.invalidateTokenCache();
+    // 3. Revogar tokens no backend e limpar cookies
+    await fetch('/api/auth/clear-tokens', { method: 'POST' });
+    // 4. Hard redirect para garantir reset completo do estado React
     window.location.href = '/login';
   },
 
@@ -53,8 +58,6 @@ export const authService = {
   },
 
   isAuthenticated(): boolean {
-    // A verificação real é feita pelo middleware no servidor.
-    // No cliente, use o authStore.
     return false;
   },
 };
