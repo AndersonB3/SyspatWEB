@@ -31,11 +31,10 @@ export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
-  const { user, logout } = useAuthStore();
+  const { user } = useAuthStore();
 
-  const handleLogout = async () => {
-    logout(); // limpa estado em memória
-    await authService.logout(); // limpa cookies HttpOnly e redireciona
+  const handleLogout = () => {
+    authService.logout();
   };
 
   const filteredItems = navItems.filter(

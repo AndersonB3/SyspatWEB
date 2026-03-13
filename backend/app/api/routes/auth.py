@@ -19,7 +19,7 @@ from app.core.security import (
     get_client_ip,
     decode_token,
 )
-from app.core.cache import revoke_token, is_token_revoked
+from app.core.cache import revoke_token
 from app.core.database import get_supabase
 from app.services.auth_service import auth_service
 
@@ -66,10 +66,10 @@ async def refresh_token(data: RefreshTokenRequest):
 
 
 @router.post("/logout")
-async def logout(data: RefreshTokenRequest, current_user: dict = Depends(get_current_user)):
+async def logout(data: RefreshTokenRequest):
     """
     Encerra a sessão revogando o refresh token fornecido.
-    O access token expira naturalmente (curta duração).
+    Não exige autenticação — basta ter o refresh token válido.
     """
     try:
         payload = decode_token(data.refresh_token)

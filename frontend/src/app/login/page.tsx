@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Shield, User, Lock, Eye, EyeOff } from 'lucide-react';
 import { authService } from '@/services/authService';
 import { useAuthStore } from '@/store/authStore';
@@ -12,6 +13,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
   const { login: storeLogin } = useAuthStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -22,32 +24,20 @@ export default function LoginPage() {
     }
 
     setLoading(true);
-
-    // Sinaliza ao AuthProvider para não interferir durante o processo de login
-    const w = window as Window & { __authLoginInProgress?: (v: boolean) => void };
-    w.__authLoginInProgress?.(true);
-
     try {
       const response = await authService.login({ username, password });
       storeLogin(response);
       showToast('Login realizado com sucesso!', 'success');
 
-      // Hard navigation: garante reset completo do estado React/Next.js
-      // evitando race condition com AuthProvider
+      // Usar router.replace para manter o estado Zustand em memória
+      // (window.location.href destruiria o store)
       const destination = response.user.mustChangePassword ? '/change-password' : '/modules';
-      // Pequeno delay para o toast aparecer antes da navegação
-      setTimeout(() => {
-        window.location.href = destination;
-      }, 500);
+      router.replace(destination);
     } catch (err: unknown) {
-      // Erro: liberar o AuthProvider novamente
-      w.__authLoginInProgress?.(false);
       const error = err as Error;
       showToast(error.message || 'Erro ao fazer login', 'error');
       setLoading(false);
     }
-    // Nota: não colocamos setLoading(false) no finally pois após sucesso
-    // a página vai navegar (window.location.href) e o estado não importa mais
   };
 
   return (

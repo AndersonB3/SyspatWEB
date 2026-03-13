@@ -2,7 +2,6 @@
 
 import { api } from './api';
 import { AuthResponse, User, LoginRequest, ChangePasswordRequest } from '@/types/auth';
-import { useAuthStore } from '@/store/authStore';
 
 /**
  * Persiste os tokens como cookies HttpOnly via API Route interna.
@@ -42,13 +41,26 @@ export const authService = {
   },
 
   async logout() {
-    // 1. Limpar store imediatamente (antes de qualquer redirect)
-    useAuthStore.getState().logout();
-    // 2. Limpar cache do token
+    // 1. Limpar cache do token (sem tocar no Zustand store!)
+    // IMPORTANTE: não chamar useAuthStore.getState().logout() aqui —
+    // isso causaria re-render do AuthProvider que mostraria <LoadingScreen />
+    // antes do redirect acontecer, travando a tela.
     api.invalidateTokenCache();
-    // 3. Revogar tokens no backend e limpar cookies
-    await fetch('/api/auth/clear-tokens', { method: 'POST' });
-    // 4. Hard redirect para garantir reset completo do estado React
+
+    // 2. Limpar cookies e revogar tokens no backend (com timeout de 3s)
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 3000);
+      await fetch('/api/auth/clear-tokens', {
+        method: 'POST',
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+    } catch {
+      // Falha ou timeout — continua com o redirect
+    }
+
+    // 3. Hard redirect — o reload do browser limpa o Zustand automaticamente
     window.location.href = '/login';
   },
 

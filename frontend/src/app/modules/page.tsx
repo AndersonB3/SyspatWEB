@@ -64,11 +64,10 @@ const modules = [
 
 export default function ModulesPage() {
   const router = useRouter();
-  const { user, logout } = useAuthStore();
+  const { user } = useAuthStore();
 
-  const handleLogout = async () => {
-    logout();
-    await authService.logout();
+  const handleLogout = () => {
+    authService.logout();
   };
 
   const filteredModules = modules.filter(

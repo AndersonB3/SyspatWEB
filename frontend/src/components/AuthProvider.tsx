@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 import { authService } from '@/services/authService';
@@ -9,36 +9,21 @@ import LoadingScreen from './LoadingScreen';
 const publicRoutes = ['/login', '/change-password'];
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
-  const { user, isAuthenticated, isLoading, setUser } = useAuthStore();
+  const { user, isAuthenticated, setUser } = useAuthStore();
   const router = useRouter();
   const pathname = usePathname();
-  // Evita que o AuthProvider interfira durante um login em progresso
-  const loginInProgressRef = useRef(false);
+  const checkingRef = useRef(false);
 
   const isPublic = publicRoutes.some((r) => pathname.startsWith(r));
 
-  // Expõe uma função global para a página de login sinalizar que está
-  // realizando o processo — assim o AuthProvider não interfere com race condition
-  useEffect(() => {
-    (window as Window & { __authLoginInProgress?: (v: boolean) => void }).__authLoginInProgress =
-      (v: boolean) => { loginInProgressRef.current = v; };
-    return () => {
-      delete (window as Window & { __authLoginInProgress?: (v: boolean) => void }).__authLoginInProgress;
-    };
-  }, []);
+  const checkAuth = useCallback(async () => {
+    // Evitar chamadas paralelas
+    if (checkingRef.current) return;
+    checkingRef.current = true;
 
-  useEffect(() => {
-    // Se um login está em progresso (página de login controlando o redirect),
-    // o AuthProvider NÃO deve interferir
-    if (loginInProgressRef.current) return;
-
-    const checkAuth = async () => {
+    try {
       if (isPublic) {
-        // Rota pública (/login, /change-password):
-        // Só redireciona se houver cookie válido E o login NÃO foi iniciado pela página
-        // Isso evita race condition com o submit do formulário de login
-        if (loginInProgressRef.current) return;
-
+        // Rota pública: verificar se já existe sessão válida para redirecionar
         try {
           const tokenRes = await fetch('/api/auth/token');
           const { token } = await tokenRes.json();
@@ -46,13 +31,12 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
             setUser(null);
             return;
           }
-          // Cookie existe (sessão ativa anterior) — redirecionar automaticamente
           const userData = await authService.me();
           setUser(userData);
           if (userData.mustChangePassword) {
-            router.push('/change-password');
+            router.replace('/change-password');
           } else {
-            router.push('/modules');
+            router.replace('/modules');
           }
         } catch {
           setUser(null);
@@ -60,40 +44,42 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         return;
       }
 
-      // Rotas protegidas — se o store já tem usuário, confiar nele
+      // Rota protegida: se o store já tem dados, confiar nele
       if (isAuthenticated && user) {
         if (user.mustChangePassword && !pathname.startsWith('/change-password')) {
-          router.push('/change-password');
+          router.replace('/change-password');
         }
         return;
       }
 
-      // Store vazio — verificar com o backend
+      // Store vazio — verificar cookie no servidor
       try {
         const userData = await authService.me();
         setUser(userData);
-
         if (userData.mustChangePassword && !pathname.startsWith('/change-password')) {
-          router.push('/change-password');
+          router.replace('/change-password');
         }
       } catch {
         setUser(null);
-        router.push('/login');
+        router.replace('/login');
       }
-    };
-
-    checkAuth();
+    } finally {
+      checkingRef.current = false;
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
-  // ↑ IMPORTANTE: dependência apenas em "pathname", NÃO em "isAuthenticated"
-  // Isso evita que o AuthProvider re-execute e crie race condition quando
-  // a página de login atualiza o store após login bem-sucedido
 
-  if (isLoading && !isPublic) {
-    return <LoadingScreen />;
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
+  // Rotas públicas: sempre renderizar children (página de login cuida de si mesma)
+  if (isPublic) {
+    return <>{children}</>;
   }
 
-  if (!isAuthenticated && !isPublic) {
+  // Rotas protegidas: mostrar loading apenas se o store ainda não tem usuário
+  if (!isAuthenticated || !user) {
     return <LoadingScreen />;
   }
 
