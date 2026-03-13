@@ -2,4 +2,19 @@
 name = "syswebpat-backend"
 version = "2.0.0"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "fastapi==0.115.6",
+    "uvicorn==0.34.0",
+    "python-dotenv==1.0.1",
+    "supabase==2.11.0",
+    "python-jose[cryptography]==3.3.0",
+    "passlib[bcrypt]==1.7.4",
+    "python-multipart==0.0.18",
+    "pydantic==2.10.4",
+    "pydantic[email]==2.10.4",
+    "pydantic-settings==2.7.1",
+    "email-validator==2.3.0",
+    "httpx==0.28.1",
+    "redis==5.2.1",
+    "bcrypt==4.2.1",
+]
