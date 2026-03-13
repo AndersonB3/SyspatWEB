@@ -2,30 +2,36 @@
 Serviço de Fornecedores.
 """
 
+import re
 from fastapi import HTTPException
 from app.core.database import get_supabase
+
+
+def _sanitize_search(value: str) -> str:
+    """Remove caracteres especiais do PostgREST para evitar injeção."""
+    return re.sub(r"[^\w\s\-.]", "", value, flags=re.UNICODE)[:200]
 
 
 class SuppliersService:
     """Lógica de negócios para gerenciamento de fornecedores."""
 
     async def create(self, data: dict) -> dict:
-        db = get_supabase()
+        db = await get_supabase()
 
         # Verificar duplicatas
         if data.get("cnpj"):
             cnpj_clean = "".join(c for c in data["cnpj"] if c.isdigit())
-            existing = db.table("suppliers").select("id").eq("cnpj", cnpj_clean).execute()
+            existing = await db.table("suppliers").select("id").eq("cnpj", cnpj_clean).execute()
             if existing.data:
                 raise HTTPException(status_code=409, detail="CNPJ já está cadastrado")
 
         if data.get("cpf"):
             cpf_clean = "".join(c for c in data["cpf"] if c.isdigit())
-            existing = db.table("suppliers").select("id").eq("cpf", cpf_clean).execute()
+            existing = await db.table("suppliers").select("id").eq("cpf", cpf_clean).execute()
             if existing.data:
                 raise HTTPException(status_code=409, detail="CPF já está cadastrado")
 
-        dup_name = db.table("suppliers").select("id").eq("name", data["name"]).execute()
+        dup_name = await db.table("suppliers").select("id").eq("name", data["name"]).execute()
         if dup_name.data:
             raise HTTPException(status_code=409, detail="Fornecedor com este nome já existe")
 
@@ -43,22 +49,24 @@ class SuppliersService:
             "notes": data.get("notes"),
         }
 
-        result = db.table("suppliers").insert(insert_data).execute()
+        result = await db.table("suppliers").insert(insert_data).execute()
         return result.data[0]
 
     async def find_all(self, page: int = 1, limit: int = 10, search: str = None) -> dict:
-        db = get_supabase()
+        db = await get_supabase()
         offset = (page - 1) * limit
 
         query = db.table("suppliers").select("*", count="exact")
 
         if search:
-            query = query.or_(
-                f"name.ilike.%{search}%,cnpj.ilike.%{search}%,cpf.ilike.%{search}%,email.ilike.%{search}%"
-            )
+            safe = _sanitize_search(search)
+            if safe:
+                query = query.or_(
+                    f"name.ilike.%{safe}%,cnpj.ilike.%{safe}%,cpf.ilike.%{safe}%,email.ilike.%{safe}%"
+                )
 
         query = query.order("created_at", desc=True).range(offset, offset + limit - 1)
-        result = query.execute()
+        result = await query.execute()
 
         total = result.count or 0
         return {
@@ -72,16 +80,16 @@ class SuppliersService:
         }
 
     async def find_one(self, supplier_id: str) -> dict:
-        db = get_supabase()
-        result = db.table("suppliers").select("*").eq("id", supplier_id).execute()
+        db = await get_supabase()
+        result = await db.table("suppliers").select("*").eq("id", supplier_id).execute()
         if not result.data:
             raise HTTPException(status_code=404, detail="Fornecedor não encontrado")
         return result.data[0]
 
     async def update(self, supplier_id: str, data: dict) -> dict:
-        db = get_supabase()
+        db = await get_supabase()
 
-        existing = db.table("suppliers").select("*").eq("id", supplier_id).execute()
+        existing = await db.table("suppliers").select("*").eq("id", supplier_id).execute()
         if not existing.data:
             raise HTTPException(status_code=404, detail="Fornecedor não encontrado")
 
@@ -89,7 +97,7 @@ class SuppliersService:
         update_data = {}
 
         if data.get("name") is not None and data["name"] != supplier["name"]:
-            dup = db.table("suppliers").select("id").eq("name", data["name"]).execute()
+            dup = await db.table("suppliers").select("id").eq("name", data["name"]).execute()
             if dup.data:
                 raise HTTPException(status_code=409, detail="Fornecedor com este nome já existe")
             update_data["name"] = data["name"]
@@ -97,7 +105,7 @@ class SuppliersService:
         if data.get("cnpj") is not None:
             cnpj_clean = "".join(c for c in data["cnpj"] if c.isdigit())
             if cnpj_clean != supplier.get("cnpj"):
-                dup = db.table("suppliers").select("id").eq("cnpj", cnpj_clean).execute()
+                dup = await db.table("suppliers").select("id").eq("cnpj", cnpj_clean).execute()
                 if dup.data:
                     raise HTTPException(status_code=409, detail="CNPJ já está cadastrado")
             update_data["cnpj"] = cnpj_clean
@@ -105,7 +113,7 @@ class SuppliersService:
         if data.get("cpf") is not None:
             cpf_clean = "".join(c for c in data["cpf"] if c.isdigit())
             if cpf_clean != supplier.get("cpf"):
-                dup = db.table("suppliers").select("id").eq("cpf", cpf_clean).execute()
+                dup = await db.table("suppliers").select("id").eq("cpf", cpf_clean).execute()
                 if dup.data:
                     raise HTTPException(status_code=409, detail="CPF já está cadastrado")
             update_data["cpf"] = cpf_clean
@@ -117,42 +125,42 @@ class SuppliersService:
         if not update_data:
             return supplier
 
-        db.table("suppliers").update(update_data).eq("id", supplier_id).execute()
+        await db.table("suppliers").update(update_data).eq("id", supplier_id).execute()
         return await self.find_one(supplier_id)
 
     async def remove(self, supplier_id: str) -> dict:
-        db = get_supabase()
-        supplier = db.table("suppliers").select("*").eq("id", supplier_id).execute()
+        db = await get_supabase()
+        supplier = await db.table("suppliers").select("*").eq("id", supplier_id).execute()
         if not supplier.data:
             raise HTTPException(status_code=404, detail="Fornecedor não encontrado")
 
-        db.table("suppliers").update({"is_active": False}).eq("id", supplier_id).execute()
+        await db.table("suppliers").update({"is_active": False}).eq("id", supplier_id).execute()
         return {"message": "Fornecedor desativado com sucesso"}
 
     async def hard_delete(self, supplier_id: str) -> dict:
-        db = get_supabase()
-        supplier = db.table("suppliers").select("*").eq("id", supplier_id).execute()
+        db = await get_supabase()
+        supplier = await db.table("suppliers").select("*").eq("id", supplier_id).execute()
         if not supplier.data:
             raise HTTPException(status_code=404, detail="Fornecedor não encontrado")
 
         # Verificar produtos vinculados
-        products = db.table("products").select("id").eq("supplier_id", supplier_id).execute()
+        products = await db.table("products").select("id").eq("supplier_id", supplier_id).execute()
         if products.data:
             raise HTTPException(
                 status_code=400,
                 detail=f"Não é possível remover: {len(products.data)} produto(s) vinculado(s)"
             )
 
-        db.table("suppliers").delete().eq("id", supplier_id).execute()
+        await db.table("suppliers").delete().eq("id", supplier_id).execute()
         return {"message": "Fornecedor removido permanentemente"}
 
     async def get_products(self, supplier_id: str) -> list:
-        db = get_supabase()
-        supplier = db.table("suppliers").select("id").eq("id", supplier_id).execute()
+        db = await get_supabase()
+        supplier = await db.table("suppliers").select("id").eq("id", supplier_id).execute()
         if not supplier.data:
             raise HTTPException(status_code=404, detail="Fornecedor não encontrado")
 
-        result = db.table("products").select("*").eq("supplier_id", supplier_id).order("created_at", desc=True).execute()
+        result = await db.table("products").select("*").eq("supplier_id", supplier_id).order("created_at", desc=True).execute()
         return result.data
 
 

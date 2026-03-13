@@ -2,9 +2,13 @@
 Rotas de Produtos (Patrimônio).
 """
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, UploadFile, File, Form
 from app.core.security import get_current_user, require_roles
-from app.schemas.products import CreateProductRequest, UpdateProductRequest, CreateMaintenanceLogRequest
+from app.schemas.products import (
+    CreateProductRequest, UpdateProductRequest,
+    CreateMaintenanceLogRequest,
+    CreateMaintenanceRecordRequest, UpdateMaintenanceRecordRequest,
+)
 from app.services.products_service import products_service
 
 router = APIRouter()
@@ -71,10 +75,28 @@ async def get_documents(
 @router.post("/{product_id}/documents")
 async def add_document(
     product_id: str,
-    data: dict,
-    current_user: dict = Depends(require_roles(["ADMIN", "MANAGER"])),
+    file: UploadFile = File(...),
+    name: str = Form(...),
+    description: str = Form(None),
+    doc_type: str = Form("OUTRO"),
+    current_user: dict = Depends(require_roles(["ADMIN", "MANAGER", "TECHNICIAN"])),
 ):
-    return await products_service.add_document(product_id, data)
+    return await products_service.add_document(
+        product_id=product_id,
+        file=file,
+        name=name,
+        description=description,
+        doc_type=doc_type,
+        user_id=current_user.get("id"),
+    )
+
+
+@router.get("/documents/{document_id}/download")
+async def download_document(
+    document_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    return await products_service.get_document_download_url(document_id)
 
 
 @router.delete("/documents/{document_id}")
@@ -102,3 +124,42 @@ async def add_maintenance_log(
     current_user: dict = Depends(require_roles(["ADMIN", "MANAGER", "TECHNICIAN"])),
 ):
     return await products_service.add_maintenance_log(product_id, data.dict())
+
+
+# --- Registros de Manutenção ---
+
+@router.get("/{product_id}/maintenance-records")
+async def get_maintenance_records(
+    product_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    return await products_service.get_maintenance_records(product_id)
+
+
+@router.post("/{product_id}/maintenance-records")
+async def create_maintenance_record(
+    product_id: str,
+    data: CreateMaintenanceRecordRequest,
+    current_user: dict = Depends(require_roles(["ADMIN", "MANAGER", "TECHNICIAN"])),
+):
+    payload = data.dict()
+    if not payload.get("registered_by"):
+        payload["registered_by"] = current_user.get("name") or current_user.get("email")
+    return await products_service.create_maintenance_record(product_id, payload)
+
+
+@router.put("/maintenance-records/{record_id}")
+async def update_maintenance_record(
+    record_id: str,
+    data: UpdateMaintenanceRecordRequest,
+    current_user: dict = Depends(require_roles(["ADMIN", "MANAGER", "TECHNICIAN"])),
+):
+    return await products_service.update_maintenance_record(record_id, data.dict(exclude_unset=True))
+
+
+@router.delete("/maintenance-records/{record_id}")
+async def delete_maintenance_record(
+    record_id: str,
+    current_user: dict = Depends(require_roles(["ADMIN", "MANAGER"])),
+):
+    return await products_service.delete_maintenance_record(record_id)

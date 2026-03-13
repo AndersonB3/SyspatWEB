@@ -9,7 +9,7 @@ from app.core.security import validate_password_strength
 
 class LoginRequest(BaseModel):
     username: str = Field(..., min_length=2, max_length=50)
-    password: str = Field(..., min_length=4, max_length=128)
+    password: str = Field(..., min_length=6, max_length=128)
 
 
 class RegisterRequest(BaseModel):
@@ -43,6 +43,12 @@ class RegisterRequest(BaseModel):
 class ChangePasswordRequest(BaseModel):
     current_password: str = Field(..., alias="currentPassword", max_length=128)
     new_password: str = Field(..., min_length=8, max_length=128, alias="newPassword")
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_new_password(cls, v: str) -> str:
+        validate_password_strength(v)
+        return v
 
     class Config:
         populate_by_name = True

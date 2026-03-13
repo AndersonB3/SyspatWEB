@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import {
   HelpCircle, Plus, MessageSquare, Send, ChevronDown,
-  ChevronUp, Tag, Clock,
+  Tag, Clock,
 } from 'lucide-react';
 import { supportService } from '@/services/supportService';
 import { FAQ, SupportTicket, TicketMessage } from '@/types/support';
@@ -137,7 +137,7 @@ export default function SuportePage() {
         {tab === 'tickets' && (
           <button
             onClick={() => setNewTicketModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-linear-to-r from-pink-600 to-pink-500 text-white text-sm font-medium rounded-xl shadow-lg shadow-pink-500/20 hover:from-pink-500 hover:to-pink-400 transition-all"
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-pink-600 to-pink-500 text-white text-sm font-medium rounded-xl shadow-lg shadow-pink-500/20 hover:from-pink-500 hover:to-pink-400 transition-all"
           >
             <Plus size={16} />
             Novo Ticket
@@ -187,23 +187,37 @@ export default function SuportePage() {
                     <HelpCircle size={16} className="text-blue-400 shrink-0" />
                     <span className="text-sm font-medium text-white">{faq.question}</span>
                   </div>
-                  {expandedFaq === faq.id ? (
-                    <ChevronUp size={16} className="text-slate-500 shrink-0" />
-                  ) : (
-                    <ChevronDown size={16} className="text-slate-500 shrink-0" />
-                  )}
+                  <ChevronDown
+                    size={16}
+                    className={`text-slate-500 shrink-0 transition-transform duration-300 ${
+                      expandedFaq === faq.id ? 'rotate-180' : 'rotate-0'
+                    }`}
+                  />
                 </button>
-                {expandedFaq === faq.id && (
-                  <div className="px-4 pb-4 pl-11">
-                    <p className="text-sm text-slate-400 leading-relaxed">{faq.answer}</p>
-                    {faq.category && (
-                      <div className="mt-2 flex items-center gap-1">
-                        <Tag size={12} className="text-slate-600" />
-                        <span className="text-xs text-slate-600">{faq.category}</span>
+                <div
+                  className={`grid transition-all duration-300 ease-in-out ${
+                    expandedFaq === faq.id ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+                  }`}
+                >
+                  <div className="overflow-hidden min-h-0">
+                    <div className="px-4 pb-4 pt-1 pl-11">
+                      <div className="text-sm text-slate-400 leading-relaxed space-y-1">
+                        {faq.answer
+                          .split(/(?=\d+\.\s)/)
+                          .filter(Boolean)
+                          .map((step, i) => (
+                            <p key={i}>{step.trim()}</p>
+                          ))}
                       </div>
-                    )}
+                      {faq.category && (
+                        <div className="mt-2 flex items-center gap-1">
+                          <Tag size={12} className="text-slate-600" />
+                          <span className="text-xs text-slate-600">{faq.category}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                )}
+                </div>
               </div>
             ))
           )}
@@ -256,32 +270,32 @@ export default function SuportePage() {
 
       {/* New Ticket Modal */}
       <Modal isOpen={newTicketModal} onClose={() => setNewTicketModal(false)} title="Novo Ticket" size="md">
-        <div className="space-y-4">
-          <div className="space-y-1.5">
-            <label className="text-sm text-slate-300">Assunto *</label>
+        <div className="space-y-2">
+          <div className="space-y-0.5">
+            <label className="text-xs text-slate-400">Assunto *</label>
             <input
               value={ticketForm.subject}
               onChange={(e) => setTicketForm({ ...ticketForm, subject: e.target.value })}
               placeholder="Descreva brevemente o problema"
-              className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+              className="w-full px-2.5 py-1.5 bg-slate-900/60 border border-slate-700 rounded-lg text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500/40"
             />
           </div>
-          <div className="space-y-1.5">
-            <label className="text-sm text-slate-300">Descrição *</label>
+          <div className="space-y-0.5">
+            <label className="text-xs text-slate-400">Descrição *</label>
             <textarea
               value={ticketForm.description}
               onChange={(e) => setTicketForm({ ...ticketForm, description: e.target.value })}
-              rows={4}
+              rows={3}
               placeholder="Descreva detalhadamente o problema..."
-              className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-xl text-white text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+              className="w-full px-2.5 py-1.5 bg-slate-900/60 border border-slate-700 rounded-lg text-white text-xs resize-none focus:outline-none focus:ring-1 focus:ring-blue-500/40"
             />
           </div>
-          <div className="space-y-1.5">
-            <label className="text-sm text-slate-300">Prioridade</label>
+          <div className="space-y-0.5">
+            <label className="text-xs text-slate-400">Prioridade</label>
             <select
               value={ticketForm.priority}
               onChange={(e) => setTicketForm({ ...ticketForm, priority: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-xl text-white text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+              className="w-full px-2.5 py-1.5 bg-slate-900/60 border border-slate-700 rounded-lg text-white text-xs appearance-none focus:outline-none focus:ring-1 focus:ring-blue-500/40"
             >
               <option value="BAIXA" className="bg-slate-800">Baixa</option>
               <option value="MEDIA" className="bg-slate-800">Média</option>
@@ -290,43 +304,43 @@ export default function SuportePage() {
             </select>
           </div>
         </div>
-        <div className="flex justify-end gap-3 mt-6">
-          <button onClick={() => setNewTicketModal(false)} className="px-4 py-2 text-sm text-slate-400 hover:text-white">Cancelar</button>
-          <button onClick={createTicket} className="px-5 py-2 bg-pink-600 hover:bg-pink-500 text-white text-sm font-medium rounded-xl">Criar Ticket</button>
+        <div className="flex justify-end gap-3 mt-3">
+          <button onClick={() => setNewTicketModal(false)} className="px-3 py-1.5 text-xs text-slate-400 hover:text-white">Cancelar</button>
+          <button onClick={createTicket} className="px-4 py-1.5 bg-pink-600 hover:bg-pink-500 text-white text-xs font-medium rounded-lg">Criar Ticket</button>
         </div>
       </Modal>
 
       {/* Ticket Detail Modal */}
       <Modal isOpen={ticketModal} onClose={() => setTicketModal(false)} title={selectedTicket?.subject || 'Ticket'} size="lg">
         {selectedTicket && (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {/* Info */}
             <div className="flex flex-wrap gap-2">
-              <span className={`text-xs px-2 py-1 rounded-lg border ${TICKET_STATUS_COLORS[selectedTicket.status] || ''}`}>
+              <span className={`text-xs px-2 py-0.5 rounded-lg border ${TICKET_STATUS_COLORS[selectedTicket.status] || ''}`}>
                 {TICKET_STATUS_LABELS[selectedTicket.status]}
               </span>
-              <span className={`text-xs px-2 py-1 rounded-lg ${PRIORITY_COLORS[selectedTicket.priority] || ''}`}>
+              <span className={`text-xs px-2 py-0.5 rounded-lg ${PRIORITY_COLORS[selectedTicket.priority] || ''}`}>
                 {TICKET_PRIORITY_LABELS[selectedTicket.priority]}
               </span>
               <span className="text-xs text-slate-500 flex items-center gap-1">
-                <Clock size={12} />
+                <Clock size={11} />
                 {new Date(selectedTicket.created_at).toLocaleDateString('pt-BR')}
               </span>
             </div>
 
-            <p className="text-sm text-slate-400">{selectedTicket.description}</p>
+            <p className="text-xs text-slate-400">{selectedTicket.description}</p>
 
             {/* Messages */}
-            <div className="border-t border-slate-700/50 pt-4">
-              <h4 className="text-sm font-medium text-white mb-3">Mensagens</h4>
-              <div className="space-y-3 max-h-60 overflow-y-auto">
+            <div className="border-t border-slate-700/50 pt-3">
+              <h4 className="text-xs font-medium text-white mb-2">Mensagens</h4>
+              <div className="space-y-2">
                 {(!selectedTicket.messages || selectedTicket.messages.length === 0) ? (
-                  <p className="text-xs text-slate-600 text-center py-4">Nenhuma mensagem</p>
+                  <p className="text-xs text-slate-600 text-center py-3">Nenhuma mensagem</p>
                 ) : (
                   selectedTicket.messages.map((msg: TicketMessage) => (
                     <div
                       key={msg.id}
-                      className={`p-3 rounded-xl text-sm ${
+                      className={`p-2.5 rounded-xl text-xs ${
                         msg.is_support_reply
                           ? 'bg-blue-500/10 border border-blue-500/20 ml-4'
                           : 'bg-slate-800/50 mr-4'
@@ -358,23 +372,23 @@ export default function SuportePage() {
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
                   placeholder="Digite sua mensagem..."
-                  className="flex-1 px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                  className="flex-1 px-2.5 py-1.5 bg-slate-900/60 border border-slate-700 rounded-lg text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500/40"
                 />
                 <button
                   onClick={sendMessage}
-                  className="px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-colors"
+                  className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors"
                 >
-                  <Send size={16} />
+                  <Send size={14} />
                 </button>
               </div>
             )}
 
             {/* Actions */}
             {isSupport && selectedTicket.status !== 'FECHADO' && (
-              <div className="flex justify-end pt-2">
+              <div className="flex justify-end">
                 <button
                   onClick={closeTicket}
-                  className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm rounded-xl transition-colors"
+                  className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white text-xs rounded-lg transition-colors"
                 >
                   Fechar Ticket
                 </button>

@@ -55,14 +55,14 @@ export default function ChangePasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-linear-to-br from-slate-950 via-slate-900 to-slate-950">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/3 left-1/3 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl" />
       </div>
 
       <div className="relative w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 mx-auto rounded-2xl bg-linear-to-br from-amber-500 to-amber-600 flex items-center justify-center shadow-2xl shadow-amber-500/20 mb-4">
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center shadow-2xl shadow-amber-500/20 mb-4">
             <Lock size={32} className="text-white" />
           </div>
           <h1 className="text-2xl font-bold text-white">Alterar Senha</h1>
@@ -134,7 +134,7 @@ export default function ChangePasswordPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-linear-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white font-medium rounded-xl shadow-lg shadow-amber-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              className="w-full py-3 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white font-medium rounded-xl shadow-lg shadow-amber-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               {loading ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />

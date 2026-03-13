@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     jwt_expire_minutes: int = 60
     jwt_refresh_expire_days: int = 7
 
+    # Redis (opcional — se vazio usa fallback em memória)
+    redis_url: str = ""
+
     # App
     app_env: str = "development"
     app_port: int = 8000
@@ -35,6 +38,9 @@ class Settings(BaseSettings):
     class Config:
         env_file = str(_BASE_DIR / ".env")
         env_file_encoding = "utf-8"
+        # Ignorar variáveis de ambiente que não estão definidas na classe
+        # (ex: SUPABASE_DB_PASSWORD, que é usada apenas por scripts de migration)
+        extra = "ignore"
 
 
 settings = Settings()

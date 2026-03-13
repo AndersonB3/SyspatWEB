@@ -8,6 +8,8 @@ export interface DashboardData {
   activeProducts: number;
   returnedProducts: number;
   openTickets: number;
+  totalValue: number;
+  totalMonthlyCost: number;
 }
 
 export interface ChartData {

@@ -14,6 +14,7 @@ from app.core.security import (
     create_refresh_token,
     decode_token,
 )
+from app.core.cache import is_token_revoked, revoke_token
 
 
 class AuthService:
@@ -43,10 +44,10 @@ class AuthService:
 
     async def register(self, data: dict) -> dict:
         """Registra um novo usuário."""
-        db = get_supabase()
+        db = await get_supabase()
 
         # Verificar username duplicado
-        existing = db.table("users").select("id").eq("username", data["username"]).execute()
+        existing = await db.table("users").select("id").eq("username", data["username"]).execute()
         if existing.data:
             raise HTTPException(status_code=409, detail="Username já cadastrado")
 
@@ -60,7 +61,7 @@ class AuthService:
             "department": data.get("department"),
         }
 
-        result = db.table("users").insert(insert_data).execute()
+        result = await db.table("users").insert(insert_data).execute()
         user = result.data[0]
 
         tokens = self._generate_tokens(user["id"], user["username"], user["role"])
@@ -68,9 +69,9 @@ class AuthService:
 
     async def login(self, username: str, password: str) -> dict:
         """Autentica um usuário — mensagem genérica para evitar timing/user-enumeration attack."""
-        db = get_supabase()
+        db = await get_supabase()
 
-        result = db.table("users").select("*").eq("username", username).execute()
+        result = await db.table("users").select("*").eq("username", username).execute()
 
         # Sempre verifica a senha (dummy hash se usuário não existe) para evitar timing attack
         _DUMMY_HASH = "$2b$12$aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
@@ -86,7 +87,7 @@ class AuthService:
             )
 
         # Atualizar último login
-        db.table("users").update(
+        await db.table("users").update(
             {"last_login_at": datetime.now(timezone.utc).isoformat()}
         ).eq("id", user["id"]).execute()
 
@@ -95,9 +96,9 @@ class AuthService:
 
     async def change_password(self, user_id: str, current_password: str, new_password: str) -> dict:
         """Altera a senha do usuário."""
-        db = get_supabase()
+        db = await get_supabase()
 
-        result = db.table("users").select("*").eq("id", user_id).execute()
+        result = await db.table("users").select("*").eq("id", user_id).execute()
         if not result.data:
             raise HTTPException(status_code=401, detail="Usuário não encontrado")
 
@@ -113,11 +114,11 @@ class AuthService:
             raise HTTPException(status_code=400, detail="A nova senha não pode ser igual à senha atual")
 
         hashed = hash_password(new_password)
-        db.table("users").update(
+        await db.table("users").update(
             {"password": hashed, "must_change_password": False}
         ).eq("id", user_id).execute()
 
-        updated = db.table("users").select("*").eq("id", user_id).execute()
+        updated = await db.table("users").select("*").eq("id", user_id).execute()
         updated_user = updated.data[0]
 
         tokens = self._generate_tokens(updated_user["id"], updated_user["username"], updated_user["role"])
@@ -128,15 +129,25 @@ class AuthService:
         }
 
     async def refresh_token(self, refresh_token: str) -> dict:
-        """Renova os tokens usando o refresh token."""
+        """Renova os tokens usando o refresh token — revoga o antigo (token rotation)."""
         payload = decode_token(refresh_token)
         if payload.get("type") != "refresh":
             raise HTTPException(status_code=401, detail="Token de renovação inválido")
 
-        db = get_supabase()
-        result = db.table("users").select("*").eq("id", payload["sub"]).execute()
+        # Verificar se o token foi revogado (logout anterior ou rotação)
+        jti = payload.get("jti")
+        if jti and is_token_revoked(jti):
+            raise HTTPException(status_code=401, detail="Token de renovação já utilizado ou revogado")
+
+        db = await get_supabase()
+        result = await db.table("users").select("*").eq("id", payload["sub"]).execute()
         if not result.data or not result.data[0].get("is_active", True):
             raise HTTPException(status_code=401, detail="Usuário inválido ou inativo")
+
+        # Revogar o refresh token atual antes de emitir novos (rotação)
+        if jti and payload.get("exp"):
+            from datetime import datetime, timezone
+            revoke_token(jti, datetime.fromtimestamp(payload["exp"], tz=timezone.utc))
 
         user = result.data[0]
         tokens = self._generate_tokens(user["id"], user["username"], user["role"])
@@ -151,10 +162,10 @@ class AuthService:
         if not user_ids:
             raise HTTPException(status_code=400, detail="Nenhum usuário informado")
 
-        db = get_supabase()
+        db = await get_supabase()
 
         # Verificar que os usuários existem
-        result = db.table("users").select("id").in_("id", user_ids).execute()
+        result = await db.table("users").select("id").in_("id", user_ids).execute()
         found_ids = [u["id"] for u in result.data]
         not_found = [uid for uid in user_ids if uid not in found_ids]
 
@@ -165,7 +176,7 @@ class AuthService:
             )
 
         # Atualizar must_change_password para True em cada usuário
-        db.table("users").update({"must_change_password": True}).in_("id", user_ids).execute()
+        await db.table("users").update({"must_change_password": True}).in_("id", user_ids).execute()
 
         return {
             "message": f"Senha de {len(found_ids)} usuário(s) marcada para redefinição obrigatória",

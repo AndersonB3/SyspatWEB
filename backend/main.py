@@ -47,8 +47,12 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
         response.headers["Cache-Control"] = "no-store"
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'none'; "
+            "frame-ancestors 'none';"
+        )
         if settings.app_env != "development":
-            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload"
         return response
 
 

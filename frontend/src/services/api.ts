@@ -68,11 +68,17 @@ class ApiClient {
         }
         return retryResponse.json();
       }
-      // Se falhou o refresh, limpar cookies e redirecionar para login
+      // Se falhou o refresh, limpar cookies apenas se não estiver em rota pública
       if (typeof window !== 'undefined') {
-        await fetch('/api/auth/clear-tokens', { method: 'POST' });
-        this.invalidateTokenCache();
-        window.location.href = '/login';
+        const publicPaths = ['/login', '/change-password'];
+        const isPublic = publicPaths.some((p) => window.location.pathname.startsWith(p));
+        if (!isPublic) {
+          await fetch('/api/auth/clear-tokens', { method: 'POST' });
+          this.invalidateTokenCache();
+          window.location.href = '/login';
+        } else {
+          this.invalidateTokenCache();
+        }
       }
       throw new Error('Sessão expirada');
     }
@@ -128,6 +134,25 @@ class ApiClient {
 
   async delete<T>(endpoint: string): Promise<T> {
     return this.request<T>(endpoint, { method: 'DELETE' });
+  }
+
+  /** Upload multipart/form-data — não define Content-Type (browser faz isso automaticamente). */
+  async upload<T>(endpoint: string, formData: FormData): Promise<T> {
+    const token = await this.getToken();
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const response = await fetch(`${this.baseURL}${endpoint}`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.detail || `Erro ${response.status}`);
+    }
+    return response.json();
   }
 }
 

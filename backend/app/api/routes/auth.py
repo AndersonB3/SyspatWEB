@@ -2,6 +2,7 @@
 Rotas de Autenticação.
 """
 
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Request
 from app.schemas.auth import (
     LoginRequest,
@@ -16,7 +17,9 @@ from app.core.security import (
     record_failed_login,
     reset_login_attempts,
     get_client_ip,
+    decode_token,
 )
+from app.core.cache import revoke_token, is_token_revoked
 from app.core.database import get_supabase
 from app.services.auth_service import auth_service
 
@@ -62,11 +65,29 @@ async def refresh_token(data: RefreshTokenRequest):
     return await auth_service.refresh_token(data.refresh_token)
 
 
+@router.post("/logout")
+async def logout(data: RefreshTokenRequest, current_user: dict = Depends(get_current_user)):
+    """
+    Encerra a sessão revogando o refresh token fornecido.
+    O access token expira naturalmente (curta duração).
+    """
+    try:
+        payload = decode_token(data.refresh_token)
+        if payload.get("type") == "refresh":
+            jti = payload.get("jti")
+            exp = payload.get("exp")
+            if jti and exp:
+                revoke_token(jti, datetime.fromtimestamp(exp, tz=timezone.utc))
+    except HTTPException:
+        pass  # Token inválido — considerar sessão já encerrada
+    return {"message": "Logout realizado com sucesso"}
+
+
 @router.get("/me")
 async def me(current_user: dict = Depends(get_current_user)):
     """Retorna dados completos do usuário logado."""
-    db = get_supabase()
-    result = db.table("users").select("*").eq("id", current_user["id"]).execute()
+    db = await get_supabase()
+    result = await db.table("users").select("*").eq("id", current_user["id"]).execute()
     if not result.data:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
     user = result.data[0]

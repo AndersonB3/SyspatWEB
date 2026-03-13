@@ -76,25 +76,25 @@ export default function ModulesPage() {
   );
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-950 via-slate-900 to-slate-950 p-4">
+    <div className="h-screen overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-4 flex flex-col">
       {/* Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-200 h-100 bg-blue-500/5 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative max-w-5xl mx-auto">
+      <div className="relative max-w-5xl mx-auto w-full flex flex-col flex-1">
         {/* Header */}
-        <div className="flex items-center justify-between py-6">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-linear-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
-              <Shield size={24} className="text-white" />
+        <div className="flex items-center justify-between py-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+              <Shield size={20} className="text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white">{APP_CONFIG.name}</h1>
+              <h1 className="text-lg font-bold text-white">{APP_CONFIG.name}</h1>
               <p className="text-xs text-slate-500">{APP_CONFIG.description}</p>
             </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             {user && (
               <div className="text-right hidden sm:block">
                 <p className="text-sm font-medium text-white">{user.name}</p>
@@ -103,37 +103,37 @@ export default function ModulesPage() {
             )}
             <button
               onClick={handleLogout}
-              className="p-2.5 rounded-xl bg-slate-800/50 border border-slate-700 text-slate-400 hover:text-red-400 hover:border-red-500/30 transition-all"
+              className="p-2 rounded-xl bg-slate-800/50 border border-slate-700 text-slate-400 hover:text-red-400 hover:border-red-500/30 transition-all"
             >
-              <LogOut size={18} />
+              <LogOut size={16} />
             </button>
           </div>
         </div>
 
         {/* Title */}
-        <div className="text-center py-10">
-          <h2 className="text-3xl font-bold text-white mb-2">Módulos do Sistema</h2>
-          <p className="text-slate-400">Selecione o módulo que deseja acessar</p>
+        <div className="text-center py-4">
+          <h2 className="text-2xl font-bold text-white mb-1">Módulos do Sistema</h2>
+          <p className="text-sm text-slate-400">Selecione o módulo que deseja acessar</p>
         </div>
 
         {/* Modules Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 flex-1 content-center">
           {filteredModules.map((mod, index) => {
             const Icon = mod.icon;
             return (
               <button
                 key={mod.href}
                 onClick={() => router.push(mod.href)}
-                className="group glass rounded-2xl p-6 text-left hover:border-slate-600 transition-all duration-300 animate-fadeIn"
+                className="group glass rounded-2xl p-4 text-left hover:border-slate-600 transition-all duration-300 animate-fadeIn"
                 style={{ animationDelay: `${index * 80}ms` }}
               >
-                <div className={`w-12 h-12 rounded-xl bg-linear-to-br ${mod.color} flex items-center justify-center shadow-lg ${mod.shadow} mb-4 group-hover:scale-110 transition-transform duration-300`}>
-                  <Icon size={22} className="text-white" />
+                <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${mod.color} flex items-center justify-center shadow-lg ${mod.shadow} mb-3 group-hover:scale-110 transition-transform duration-300`}>
+                  <Icon size={18} className="text-white" />
                 </div>
-                <h3 className="text-lg font-semibold text-white mb-1 group-hover:text-blue-400 transition-colors">
+                <h3 className="text-sm font-semibold text-white mb-0.5 group-hover:text-blue-400 transition-colors">
                   {mod.label}
                 </h3>
-                <p className="text-sm text-slate-500 leading-relaxed">
+                <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">
                   {mod.description}
                 </p>
               </button>

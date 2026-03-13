@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import {
   Package, Truck, Users, Wrench, CheckCircle,
-  RotateCcw, HelpCircle, TrendingUp,
+  RotateCcw, HelpCircle, TrendingUp, DollarSign, CalendarDays,
 } from 'lucide-react';
 import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis,
@@ -94,6 +94,26 @@ export default function DashboardPage() {
     { label: 'Tickets Abertos', value: dashboard?.openTickets || 0, icon: HelpCircle, color: 'text-blue-400' },
   ];
 
+  const formatCurrency = (val: number) =>
+    `R$ ${val.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+
+  const financeStats = [
+    {
+      label: 'Valor Total do Patrimônio',
+      value: formatCurrency(dashboard?.totalValue || 0),
+      icon: DollarSign,
+      color: 'from-amber-500 to-amber-600',
+      shadow: 'shadow-amber-500/20',
+    },
+    {
+      label: 'Custo Mensal Total',
+      value: formatCurrency(dashboard?.totalMonthlyCost || 0),
+      icon: CalendarDays,
+      color: 'from-teal-500 to-teal-600',
+      shadow: 'shadow-teal-500/20',
+    },
+  ];
+
   return (
     <div className="space-y-6 animate-fadeIn">
       {/* Header */}
@@ -122,7 +142,7 @@ export default function DashboardPage() {
                   <p className="text-sm text-slate-500">{stat.label}</p>
                   <p className="text-3xl font-bold text-white mt-1">{stat.value}</p>
                 </div>
-                <div className={`w-10 h-10 rounded-xl bg-linear-to-br ${stat.color} flex items-center justify-center ${stat.shadow} shadow-lg`}>
+                <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center ${stat.shadow} shadow-lg`}>
                   <Icon size={18} className="text-white" />
                 </div>
               </div>
@@ -141,6 +161,30 @@ export default function DashboardPage() {
               <div>
                 <p className="text-xs text-slate-500">{sub.label}</p>
                 <p className="text-lg font-semibold text-white">{sub.value}</p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Finance stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {financeStats.map((stat, index) => {
+          const Icon = stat.icon;
+          return (
+            <div
+              key={stat.label}
+              className="glass rounded-2xl p-5 animate-fadeIn"
+              style={{ animationDelay: `${index * 80}ms` }}
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-sm text-slate-500">{stat.label}</p>
+                  <p className="text-2xl font-bold text-white mt-1">{stat.value}</p>
+                </div>
+                <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center ${stat.shadow} shadow-lg`}>
+                  <Icon size={18} className="text-white" />
+                </div>
               </div>
             </div>
           );

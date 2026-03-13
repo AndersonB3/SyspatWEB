@@ -176,7 +176,7 @@ export default function UsuariosPage() {
             />
           </div>
           {isAdmin && (
-            <button onClick={openNew} className="flex items-center gap-2 px-4 py-2 bg-linear-to-r from-purple-600 to-purple-500 text-white text-sm font-medium rounded-xl shadow-lg shadow-purple-500/20 hover:from-purple-500 hover:to-purple-400 transition-all">
+            <button onClick={openNew} className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-500 text-white text-sm font-medium rounded-xl shadow-lg shadow-purple-500/20 hover:from-purple-500 hover:to-purple-400 transition-all">
               <Plus size={16} />
               <span className="hidden sm:inline">Novo Usuário</span>
             </button>
@@ -254,33 +254,33 @@ export default function UsuariosPage() {
 
       {/* User Form Modal */}
       <Modal isOpen={modal} onClose={() => setModal(false)} title={editing ? 'Editar Usuário' : 'Novo Usuário'} size="lg">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-2">
           {[
-            { key: 'name', label: 'Nome *' },
-            { key: 'username', label: 'Usuário *' },
-            { key: 'email', label: 'Email', type: 'email' },
-            { key: 'password', label: editing ? 'Nova Senha (opcional)' : 'Senha *', type: 'password' },
-            { key: 'cpf', label: 'CPF' },
-            { key: 'birth_date', label: 'Data Nascimento', type: 'date' },
-            { key: 'department', label: 'Departamento' },
-            { key: 'phone', label: 'Telefone' },
+            { key: 'name',       label: 'Nome *',                                  type: 'text',     span: 2 },
+            { key: 'username',   label: 'Usuário *',                               type: 'text',     span: 1 },
+            { key: 'email',      label: 'Email',                                   type: 'email',    span: 2 },
+            { key: 'password',   label: editing ? 'Nova Senha (opcional)' : 'Senha *', type: 'password', span: 1 },
+            { key: 'cpf',        label: 'CPF',                                     type: 'text',     span: 1 },
+            { key: 'birth_date', label: 'Dt. Nascimento',                          type: 'date',     span: 1 },
+            { key: 'department', label: 'Departamento',                            type: 'text',     span: 1 },
+            { key: 'phone',      label: 'Telefone',                                type: 'text',     span: 1 },
           ].map((field) => (
-            <div key={field.key} className="space-y-1.5">
-              <label className="text-sm text-slate-300">{field.label}</label>
+            <div key={field.key} className={`space-y-0.5 col-span-${field.span}`}>
+              <label className="text-xs text-slate-400">{field.label}</label>
               <input
-                type={field.type || 'text'}
+                type={field.type}
                 value={(form as Record<string, string>)[field.key]}
                 onChange={(e) => setForm({ ...form, [field.key]: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                className="w-full px-2.5 py-1 bg-slate-900/60 border border-slate-700 rounded-lg text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500/40"
               />
             </div>
           ))}
-          <div className="space-y-1.5">
-            <label className="text-sm text-slate-300">Função</label>
+          <div className="col-span-1 space-y-0.5">
+            <label className="text-xs text-slate-400">Função</label>
             <select
               value={form.role}
               onChange={(e) => setForm({ ...form, role: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40 appearance-none"
+              className="w-full px-2.5 py-1 bg-slate-900/60 border border-slate-700 rounded-lg text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500/40 appearance-none"
             >
               {roleOptions.map((opt) => (
                 <option key={opt.value} value={opt.value} className="bg-slate-800">{opt.label}</option>
@@ -288,9 +288,9 @@ export default function UsuariosPage() {
             </select>
           </div>
         </div>
-        <div className="flex justify-end gap-3 mt-6">
-          <button onClick={() => setModal(false)} className="px-4 py-2 text-sm text-slate-400 hover:text-white">Cancelar</button>
-          <button onClick={save} className="px-5 py-2 bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium rounded-xl">
+        <div className="flex justify-end gap-3 mt-3">
+          <button onClick={() => setModal(false)} className="px-3 py-1.5 text-xs text-slate-400 hover:text-white">Cancelar</button>
+          <button onClick={save} className="px-4 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-medium rounded-lg">
             {editing ? 'Salvar' : 'Criar'}
           </button>
         </div>

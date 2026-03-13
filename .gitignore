@@ -49,6 +49,12 @@ frontend/coverage/
 frontend/*.tsbuildinfo
 
 # -------------------------------------------------------
+# Scripts de migração e arquivos temporários do projeto
+# -------------------------------------------------------
+backend/migrate_*.py
+backend/create_bucket.py
+*.zip
+# -------------------------------------------------------
 # Geral
 # -------------------------------------------------------
 .DS_Store

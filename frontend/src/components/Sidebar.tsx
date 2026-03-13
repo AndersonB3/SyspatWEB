@@ -46,7 +46,7 @@ export default function Sidebar() {
     <div className="flex flex-col h-full">
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-slate-700/50">
-        <div className="w-10 h-10 rounded-xl bg-linear-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
           <Shield size={20} className="text-white" />
         </div>
         {!collapsed && (

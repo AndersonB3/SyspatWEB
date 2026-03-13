@@ -13,7 +13,7 @@ router = APIRouter()
 @router.get("")
 async def list_suppliers(
     page: int = Query(1, ge=1),
-    limit: int = Query(10, ge=1, le=100),
+    limit: int = Query(10, ge=1, le=500),
     search: str = Query(None),
     current_user: dict = Depends(get_current_user),
 ):
