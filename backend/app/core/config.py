@@ -4,6 +4,7 @@ Configurações da aplicação carregadas via variáveis de ambiente.
 
 import os
 from pathlib import Path
+from pydantic import field_validator
 from pydantic_settings import BaseSettings
 from typing import List
 
@@ -30,6 +31,18 @@ class Settings(BaseSettings):
     app_env: str = "development"
     app_port: int = 8000
     cors_origins: str = "http://localhost:3000"
+
+    # Sanitizar todos os campos string para remover \r\n acidental (CRLF de env vars)
+    @field_validator(
+        "supabase_url", "supabase_anon_key", "supabase_service_role_key",
+        "jwt_secret", "jwt_algorithm", "redis_url", "app_env", "cors_origins",
+        mode="before"
+    )
+    @classmethod
+    def strip_whitespace(cls, v: str) -> str:
+        if isinstance(v, str):
+            return v.strip()
+        return v
 
     @property
     def cors_origins_list(self) -> List[str]:
